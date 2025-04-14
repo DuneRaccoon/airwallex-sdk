@@ -216,7 +216,7 @@ class AirwallexAPIBase(Generic[T]):
     
     def create(self, payload: Union[Dict[str, Any], T]) -> T:
         """Create a new resource."""
-        if self.client.__class__.__name__.startswith('Async'):
+        if str(self.client.__class__.__name__).startswith('Async'):
             raise ValueError("This method requires a sync client.")
         
         # Convert Pydantic model to dict if needed
@@ -261,7 +261,7 @@ class AirwallexAPIBase(Generic[T]):
     
     def paginate(self, **params: Any) -> List[T]:
         """Fetch all pages of data."""
-        if self.client.__class__.__name__.startswith('Async'):
+        if str(self.client.__class__.__name__).startswith('Async'):
             raise ValueError("This method requires a sync client.")
             
         all_items: List[Dict[str, Any]] = []

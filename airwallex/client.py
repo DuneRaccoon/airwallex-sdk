@@ -6,7 +6,7 @@ import logging
 import time
 import httpx
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Union, Type, TypeVar, cast
 from importlib import import_module
 
@@ -93,7 +93,7 @@ class AirwallexClient:
         and returns a token valid for 30 minutes.
         """
         # Return early if we already have a valid token
-        if self._token and self._token_expiry and datetime.now() < self._token_expiry:
+        if self._token and self._token_expiry and datetime.now(timezone.utc) < self._token_expiry:
             return
         
         # Use a separate client for authentication to avoid base_url issues
@@ -128,14 +128,14 @@ class AirwallexClient:
                 self._token_expiry = datetime.fromisoformat(auth_data["expires_at"].replace("Z", "+00:00"))
             else:
                 # Default to 30 minutes if no expires_at provided
-                self._token_expiry = datetime.now() + timedelta(minutes=30)
+                self._token_expiry = datetime.now(timezone.utc) + timedelta(minutes=30)
             
             logger.debug("Successfully authenticated with Airwallex API")
                 
         finally:
             auth_client.close()
     
-    def _request(self, method: str, url: str, **kwargs) -> httpx.Response:
+    def _request(self, method: str, url: str, **kwargs) -> Optional[httpx.Response]:
         """
         Make a synchronous HTTP request with automatic authentication.
         
