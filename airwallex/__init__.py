@@ -19,6 +19,7 @@ from .models.account import Account as AccountModel
 from .models.payment import Payment as PaymentModel
 from .models.beneficiary import Beneficiary as BeneficiaryModel
 from .models.invoice import Invoice as InvoiceModel, InvoiceItem
+from .models.financial_transaction import FinancialTransaction as FinancialTransactionModel
 
 __all__ = [
     "AirwallexClient",
@@ -35,6 +36,7 @@ __all__ = [
     "BeneficiaryModel",
     "InvoiceModel",
     "InvoiceItem",
+    "FinancialTransactionModel",
 ]
 
 __version__ = "0.1.0"

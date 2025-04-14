@@ -6,7 +6,7 @@ import logging
 import time
 import httpx
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 from typing import Any, Dict, List, Optional, Union, Type, TypeVar, cast
 from importlib import import_module
 
@@ -79,10 +79,36 @@ class AirwallexClient:
             
         return headers
     
+    @staticmethod
+    def _prepare_params(params: Dict[str, Any]) -> Dict[str, str]:
+        """Convert parameters to string format for URL encoding.
+        
+        datetime objects are formatted as ISO8601 strings.
+        Lists are joined by commas.
+        All other types are converted to strings.
+        
+        Args:
+            params (Dict[str, Any]): _description_
+
+        Returns:
+            Dict[str, str]: _description_
+        """
+        prepared_params = {}
+        for key, value in params.items():
+            if isinstance(value, (date, datetime)):
+                prepared_params[key] = value.isoformat()
+            elif isinstance(value, list):
+                prepared_params[key] = ",".join(map(str, value))
+            else:
+                prepared_params[key] = str(value)
+        return prepared_params
+    
     def _prepare_request(self, **kwargs) -> Dict[str, Any]:
         """Merge default headers and allow caller overrides."""
         headers = kwargs.pop('headers', {})
+        params = kwargs.pop('params', {})
         kwargs['headers'] = {**self.headers, **headers}
+        kwargs['params'] = self._prepare_params(params)
         return kwargs
     
     def authenticate(self) -> None:
