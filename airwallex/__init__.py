@@ -20,6 +20,16 @@ from .models.payment import Payment as PaymentModel
 from .models.beneficiary import Beneficiary as BeneficiaryModel
 from .models.invoice import Invoice as InvoiceModel, InvoiceItem
 from .models.financial_transaction import FinancialTransaction as FinancialTransactionModel
+from .models.fx import FXConversion, FXQuote
+
+# Issuing API Models
+from .models.issuing_authorization import Authorization as IssuingAuthorizationModel
+from .models.issuing_cardholder import Cardholder as IssuingCardholderModel
+from .models.issuing_card import Card as IssuingCardModel, CardDetails
+from .models.issuing_digital_wallet_token import DigitalWalletToken as IssuingDigitalWalletTokenModel
+from .models.issuing_transaction_dispute import TransactionDispute as IssuingTransactionDisputeModel
+from .models.issuing_transaction import Transaction as IssuingTransactionModel
+from .models.issuing_config import IssuingConfig as IssuingConfigModel
 
 __all__ = [
     "AirwallexClient",
@@ -37,6 +47,17 @@ __all__ = [
     "InvoiceModel",
     "InvoiceItem",
     "FinancialTransactionModel",
+    "FXConversion",
+    "FXQuote",
+    # Issuing API
+    "IssuingAuthorizationModel",
+    "IssuingCardholderModel",
+    "IssuingCardModel",
+    "CardDetails",
+    "IssuingDigitalWalletTokenModel",
+    "IssuingTransactionDisputeModel",
+    "IssuingTransactionModel",
+    "IssuingConfigModel",
 ]
 
 __version__ = "0.1.0"

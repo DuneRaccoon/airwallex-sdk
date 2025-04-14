@@ -8,6 +8,15 @@ from .beneficiary import Beneficiary
 from .invoice import Invoice
 from .financial_transaction import FinancialTransaction
 
+# Issuing API
+from .issuing_authorization import IssuingAuthorization
+from .issuing_cardholder import IssuingCardholder
+from .issuing_card import IssuingCard
+from .issuing_digital_wallet_token import IssuingDigitalWalletToken
+from .issuing_transaction_dispute import IssuingTransactionDispute
+from .issuing_transaction import IssuingTransaction
+from .issuing_config import IssuingConfig
+
 __all__ = [
     "AirwallexAPIBase",
     "Account",
@@ -15,4 +24,12 @@ __all__ = [
     "Beneficiary",
     "Invoice",
     "FinancialTransaction",
+    # Issuing API
+    "IssuingAuthorization",
+    "IssuingCardholder",
+    "IssuingCard",
+    "IssuingDigitalWalletToken",
+    "IssuingTransactionDispute",
+    "IssuingTransaction",
+    "IssuingConfig",
 ]

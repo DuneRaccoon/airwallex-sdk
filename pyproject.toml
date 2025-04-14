@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "airwallex-sdk"
-version = "0.1.0"
+version = "0.2.0"
 description = "Unofficial Airwallex SDK for Python"
 authors = ["duneraccoon <benjamincsherro@hotmail.com>"]
 license = "MIT"
@@ -11,6 +11,7 @@ packages = [{ include = "airwallex" }]
 [tool.poetry.dependencies]
 python = "^3.10"
 httpx = "^0.28.1"
+pydantic = "^2.11.3"
 
 
 [tool.black]
