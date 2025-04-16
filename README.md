@@ -1,16 +1,14 @@
 # UNOFFICIAL Airwallex Python SDK
 
-A fully-featured SDK for interacting with the [Airwallex API](https://www.airwallex.com/docs/api).
+A simple SDK for interacting with the [Airwallex API](https://www.airwallex.com/docs/api).
 
 ## Features
 
-- Comprehensive implementation of the Airwallex API
-- Support for Payments API and Issuing API
+- SOMEWHAT Comprehensive implementation of the Airwallex API
 - Both synchronous and asynchronous client support
 - Automatic authentication and token refresh
 - Built-in rate limiting and retry logic
 - Type checking with Pydantic models
-- Pagination handling
 
 ## Installation
 

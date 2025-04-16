@@ -8,6 +8,10 @@ from .beneficiary import Beneficiary as BeneficiaryModel
 from .invoice import Invoice as InvoiceModel, InvoiceItem
 from .financial_transaction import FinancialTransaction as FinancialTransactionModel
 from .fx import FXConversion, FXQuote
+from .account_detail import (
+    AccountDetailModel, AccountCreateRequest, AccountUpdateRequest,
+    Amendment, AmendmentCreateRequest, WalletInfo, TermsAndConditionsRequest
+)
 
 # Issuing API Models
 from .issuing_common import (
@@ -38,6 +42,13 @@ __all__ = [
     "FinancialTransactionModel",
     "FXConversion",
     "FXQuote",
+    "AccountDetailModel",
+    "AccountCreateRequest",
+    "AccountUpdateRequest",
+    "Amendment", 
+    "AmendmentCreateRequest", 
+    "WalletInfo", 
+    "TermsAndConditionsRequest",
     # Issuing API
     "Address",
     "Name",

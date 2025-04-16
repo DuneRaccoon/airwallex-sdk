@@ -7,6 +7,7 @@ from .payment import Payment
 from .beneficiary import Beneficiary
 from .invoice import Invoice
 from .financial_transaction import FinancialTransaction
+from .account_detail import AccountDetail
 
 # Issuing API
 from .issuing_authorization import IssuingAuthorization
@@ -24,6 +25,7 @@ __all__ = [
     "Beneficiary",
     "Invoice",
     "FinancialTransaction",
+    "AccountDetail",
     # Issuing API
     "IssuingAuthorization",
     "IssuingCardholder",

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "airwallex-sdk"
-version = "0.2.0"
+version = "0.1.1"
 description = "Unofficial Airwallex SDK for Python"
 authors = ["duneraccoon <benjamincsherro@hotmail.com>"]
 license = "MIT"
@@ -22,3 +22,6 @@ target-version = ["py38", "py39", "py310", "py311"]
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.urls]
+Source = "https://github.com/DuneRaccoon/airwallex-sdk"

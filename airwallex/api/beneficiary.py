@@ -2,22 +2,22 @@
 Airwallex Beneficiary API.
 """
 from typing import Dict, Any, List, Optional, Type, TypeVar, Union, cast
-from ..models.beneficiary import Beneficiary, BeneficiaryCreateRequest, BeneficiaryUpdateRequest
+from ..models.beneficiary import Beneficiary as BeneficiaryModel, BeneficiaryCreateRequest, BeneficiaryUpdateRequest
 from .base import AirwallexAPIBase
 
-T = TypeVar("T", bound=Beneficiary)
+T = TypeVar("T", bound=BeneficiaryModel)
 
 
-class Beneficiary(AirwallexAPIBase[Beneficiary]):
+class Beneficiary(AirwallexAPIBase[BeneficiaryModel]):
     """
     Operations for Airwallex beneficiaries.
     
     Beneficiaries represent recipients of payments.
     """
     endpoint = "beneficiaries"
-    model_class = cast(Type[Beneficiary], Beneficiary)
+    model_class = cast(Type[BeneficiaryModel], BeneficiaryModel)
     
-    def create_from_model(self, beneficiary: BeneficiaryCreateRequest) -> Beneficiary:
+    def create_from_model(self, beneficiary: BeneficiaryCreateRequest) -> BeneficiaryModel:
         """
         Create a new beneficiary using a Pydantic model.
         
@@ -29,7 +29,7 @@ class Beneficiary(AirwallexAPIBase[Beneficiary]):
         """
         return self.create(beneficiary)
     
-    async def create_from_model_async(self, beneficiary: BeneficiaryCreateRequest) -> Beneficiary:
+    async def create_from_model_async(self, beneficiary: BeneficiaryCreateRequest) -> BeneficiaryModel:
         """
         Create a new beneficiary using a Pydantic model asynchronously.
         
@@ -41,7 +41,7 @@ class Beneficiary(AirwallexAPIBase[Beneficiary]):
         """
         return await self.create_async(beneficiary)
     
-    def update_from_model(self, beneficiary_id: str, beneficiary: BeneficiaryUpdateRequest) -> Beneficiary:
+    def update_from_model(self, beneficiary_id: str, beneficiary: BeneficiaryUpdateRequest) -> BeneficiaryModel:
         """
         Update a beneficiary using a Pydantic model.
         
@@ -54,7 +54,7 @@ class Beneficiary(AirwallexAPIBase[Beneficiary]):
         """
         return self.update(beneficiary_id, beneficiary)
     
-    async def update_from_model_async(self, beneficiary_id: str, beneficiary: BeneficiaryUpdateRequest) -> Beneficiary:
+    async def update_from_model_async(self, beneficiary_id: str, beneficiary: BeneficiaryUpdateRequest) -> BeneficiaryModel:
         """
         Update a beneficiary using a Pydantic model asynchronously.
         
@@ -103,7 +103,7 @@ class Beneficiary(AirwallexAPIBase[Beneficiary]):
         else:
             raise ValueError("Use validate for sync clients")
     
-    def deactivate(self, beneficiary_id: str) -> Beneficiary:
+    def deactivate(self, beneficiary_id: str) -> BeneficiaryModel:
         """
         Deactivate a beneficiary.
         
@@ -116,7 +116,7 @@ class Beneficiary(AirwallexAPIBase[Beneficiary]):
         update_request = BeneficiaryUpdateRequest(status="disabled")
         return self.update(beneficiary_id, update_request)
     
-    async def deactivate_async(self, beneficiary_id: str) -> Beneficiary:
+    async def deactivate_async(self, beneficiary_id: str) -> BeneficiaryModel:
         """
         Deactivate a beneficiary asynchronously.
         
@@ -129,7 +129,7 @@ class Beneficiary(AirwallexAPIBase[Beneficiary]):
         update_request = BeneficiaryUpdateRequest(status="disabled")
         return await self.update_async(beneficiary_id, update_request)
     
-    def activate(self, beneficiary_id: str) -> Beneficiary:
+    def activate(self, beneficiary_id: str) -> BeneficiaryModel:
         """
         Activate a beneficiary.
         
@@ -142,7 +142,7 @@ class Beneficiary(AirwallexAPIBase[Beneficiary]):
         update_request = BeneficiaryUpdateRequest(status="active")
         return self.update(beneficiary_id, update_request)
     
-    async def activate_async(self, beneficiary_id: str) -> Beneficiary:
+    async def activate_async(self, beneficiary_id: str) -> BeneficiaryModel:
         """
         Activate a beneficiary asynchronously.
         

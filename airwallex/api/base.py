@@ -19,18 +19,9 @@ from typing import (
     get_args,
     get_origin
 )
-import httpx
 
-from ..models.base import AirwallexModel, PaginatedResponse
-from ..utils import snake_to_pascal_case, serialize, deserialize
-from ..exceptions import (
-    AirwallexAPIError, 
-    AuthenticationError, 
-    RateLimitError, 
-    ResourceNotFoundError, 
-    ValidationError, 
-    ServerError
-)
+from ..models.base import AirwallexModel
+from ..utils import snake_to_pascal_case
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +80,7 @@ class AirwallexAPIBase(Generic[T]):
                 :param dataframe: If True, return a DataFrame instead of a list of dictionaries.
                 """
                 url = self._build_url(resource_id=self.id, suffix=path_item)
-                if not self.client.__class__.__name__.startswith('Async'):
+                if not str(self.client.__class__.__name__).startswith('Async'):
                     response = self.client._request("GET", url, params=kwargs)
                     data = self._parse_response_data(response.json())
                     return data
@@ -118,12 +109,12 @@ class AirwallexAPIBase(Generic[T]):
         For async clients, returns a coroutine that yields an AsyncGenerator[T, None].
         """
         if resource_id is not None:
-            if not self.client.__class__.__name__.startswith('Async'):
+            if not str(self.client.__class__.__name__).startswith('Async'):
                 return self.fetch(resource_id)
             else:
                 return self.fetch_async(resource_id)
         else:
-            if not self.client.__class__.__name__.startswith('Async'):
+            if not str(self.client.__class__.__name__).startswith('Async'):
                 return self.paginate_generator(**kwargs)
             else:
                 return self.paginate_async_generator(**kwargs)
@@ -195,7 +186,7 @@ class AirwallexAPIBase(Generic[T]):
     
     def fetch(self, resource_id: Any) -> T:
         """Fetch a single resource by ID."""
-        if self.client.__class__.__name__.startswith('Async'):
+        if str(self.client.__class__.__name__).startswith('Async'):
             raise ValueError("This method requires a sync client.")
         url = self._build_url(resource_id)
         response = self.client._request("GET", url)
@@ -207,10 +198,10 @@ class AirwallexAPIBase(Generic[T]):
     
     def list(self, **params: Any) -> List[T]:
         """List resources with optional filtering parameters."""
-        if self.client.__class__.__name__.startswith('Async'):
+        if str(self.client.__class__.__name__).startswith('Async'):
             raise ValueError("This method requires a sync client.")
         url = self._build_url()
-        response = self.client._request("GET", url, params=serialize(params))
+        response = self.client._request("GET", url, params=params)
         data_list = self._parse_response_data(response.json())
         return [self.model_class.from_api_response(item) for item in data_list]
     
@@ -219,11 +210,10 @@ class AirwallexAPIBase(Generic[T]):
         if str(self.client.__class__.__name__).startswith('Async'):
             raise ValueError("This method requires a sync client.")
         
+        payload_dict = payload
         # Convert Pydantic model to dict if needed
         if isinstance(payload, AirwallexModel):
             payload_dict = payload.to_api_dict()
-        else:
-            payload_dict = serialize(payload)
             
         url = self._build_url()
         response = self.client._request("POST", url, json=payload_dict)
@@ -235,14 +225,13 @@ class AirwallexAPIBase(Generic[T]):
     
     def update(self, resource_id: Any, payload: Union[Dict[str, Any], T]) -> T:
         """Update an existing resource."""
-        if self.client.__class__.__name__.startswith('Async'):
+        if str(self.client.__class__.__name__).startswith('Async'):
             raise ValueError("This method requires a sync client.")
-            
+        
+        payload_dict = payload
         # Convert Pydantic model to dict if needed
         if isinstance(payload, AirwallexModel):
             payload_dict = payload.to_api_dict()
-        else:
-            payload_dict = serialize(payload)
             
         url = self._build_url(resource_id)
         response = self.client._request("PUT", url, json=payload_dict)
@@ -254,96 +243,55 @@ class AirwallexAPIBase(Generic[T]):
     
     def delete(self, resource_id: Any) -> None:
         """Delete a resource."""
-        if self.client.__class__.__name__.startswith('Async'):
+        if str(self.client.__class__.__name__).startswith('Async'):
             raise ValueError("This method requires a sync client.")
         url = self._build_url(resource_id)
         self.client._request("DELETE", url)
-    
-    def paginate(self, **params: Any) -> List[T]:
-        """Fetch all pages of data."""
+        
+    def paginate(self, stop_page: Optional[int] = None, **params: Any) -> Generator[T, None, None]:
+        """
+        Generate items one by one from paginated results.
+        
+        Args:
+            stop_page: The page number to stop at (optional).
+            **params: Filter parameters to pass to the API.
+            
+        Yields:
+            T: Each item from the paginated results.
+        """
         if str(self.client.__class__.__name__).startswith('Async'):
             raise ValueError("This method requires a sync client.")
             
-        all_items: List[Dict[str, Any]] = []
-        page = params.get("page", 1)
+        page_num = params.get("page_num", 1)
         page_size = params.get("page_size", 100)
         
         while True:
-            params["page"] = page
+            params["page_num"] = page_num
             params["page_size"] = page_size
             url = self._build_url()
-            response = self.client._request("GET", url, params=serialize(params))
-            response_data = response.json()
+            response = self.client._request("GET", url, params=params)
+            data = response.json()
             
-            # Check if response is paginated
-            if isinstance(response_data, dict) and 'items' in response_data:
-                items = response_data['items']
-                total_pages = response_data.get('total_pages', 1)
+            items = data.get("items", [])
+            has_more = data.get("has_more", False)
+            
+            for item in items:
+                yield self.model_class.from_api_response(item)
                 
-                if not items:
-                    break
-                    
-                all_items.extend(items)
-                
-                if page >= total_pages:
-                    break
-                    
-                page += 1
-            else:
-                # Not paginated, just use the data as is
-                page_data = self._parse_response_data(response_data)
-                if not page_data:
-                    break
-                all_items.extend(page_data)
+            if not has_more or not items:
                 break
                 
-        return [self.model_class.from_api_response(item) for item in all_items]
-    
-    def paginate_generator(self, **params: Any) -> Generator[T, None, None]:
-        """Generate items one by one from paginated results."""
-        if self.client.__class__.__name__.startswith('Async'):
-            raise ValueError("This method requires a sync client.")
+            page_num += 1
             
-        page = params.get("page", 1)
-        page_size = params.get("page_size", 100)
+            if stop_page and page_num > stop_page:
+                break
         
-        while True:
-            params["page"] = page
-            params["page_size"] = page_size
-            url = self._build_url()
-            response = self.client._request("GET", url, params=serialize(params))
-            response_data = response.json()
-            
-            # Check if response is paginated
-            if isinstance(response_data, dict) and 'items' in response_data:
-                items = response_data['items']
-                total_pages = response_data.get('total_pages', 1)
-                
-                if not items:
-                    break
-                    
-                for item in items:
-                    yield self.model_class.from_api_response(item)
-                
-                if page >= total_pages:
-                    break
-                    
-                page += 1
-            else:
-                # Not paginated, just use the data as is
-                page_data = self._parse_response_data(response_data)
-                if not page_data:
-                    break
-                    
-                for item in page_data:
-                    yield self.model_class.from_api_response(item)
-                break
-    
+        
     # Asynchronous API methods
     
     async def fetch_async(self, resource_id: Any) -> T:
         """Fetch a single resource by ID asynchronously."""
-        if not self.client.__class__.__name__.startswith('Async'):
+        if not str(self.client.__class__.__name__).startswith('Async'):
             raise ValueError("This method requires an async client.")
         url = self._build_url(resource_id)
         response = await self.client._request("GET", url)
@@ -355,23 +303,22 @@ class AirwallexAPIBase(Generic[T]):
     
     async def list_async(self, **params: Any) -> List[T]:
         """List resources with optional filtering parameters asynchronously."""
-        if not self.client.__class__.__name__.startswith('Async'):
+        if not str(self.client.__class__.__name__).startswith('Async'):
             raise ValueError("This method requires an async client.")
         url = self._build_url()
-        response = await self.client._request("GET", url, params=serialize(params))
+        response = await self.client._request("GET", url, params=params)
         data_list = self._parse_response_data(response.json())
         return [self.model_class.from_api_response(item) for item in data_list]
     
     async def create_async(self, payload: Union[Dict[str, Any], T]) -> T:
         """Create a new resource asynchronously."""
-        if not self.client.__class__.__name__.startswith('Async'):
+        if not str(self.client.__class__.__name__).startswith('Async'):
             raise ValueError("This method requires an async client.")
-            
+        
+        payload_dict = payload
         # Convert Pydantic model to dict if needed
         if isinstance(payload, AirwallexModel):
             payload_dict = payload.to_api_dict()
-        else:
-            payload_dict = serialize(payload)
             
         url = self._build_url()
         response = await self.client._request("POST", url, json=payload_dict)
@@ -383,14 +330,13 @@ class AirwallexAPIBase(Generic[T]):
     
     async def update_async(self, resource_id: Any, payload: Union[Dict[str, Any], T]) -> T:
         """Update an existing resource asynchronously."""
-        if not self.client.__class__.__name__.startswith('Async'):
+        if not str(self.client.__class__.__name__).startswith('Async'):
             raise ValueError("This method requires an async client.")
-            
+        
+        payload_dict = payload
         # Convert Pydantic model to dict if needed
         if isinstance(payload, AirwallexModel):
             payload_dict = payload.to_api_dict()
-        else:
-            payload_dict = serialize(payload)
             
         url = self._build_url(resource_id)
         response = await self.client._request("PUT", url, json=payload_dict)
@@ -402,87 +348,45 @@ class AirwallexAPIBase(Generic[T]):
     
     async def delete_async(self, resource_id: Any) -> None:
         """Delete a resource asynchronously."""
-        if not self.client.__class__.__name__.startswith('Async'):
+        if not str(self.client.__class__.__name__).startswith('Async'):
             raise ValueError("This method requires an async client.")
         url = self._build_url(resource_id)
         await self.client._request("DELETE", url)
-    
-    async def paginate_async(self, **params: Any) -> List[T]:
-        """Fetch all pages of data asynchronously."""
-        if not self.client.__class__.__name__.startswith('Async'):
+
+    async def paginate_async(self, stop_page: Optional[int] = None, **params: Any) -> AsyncGenerator[T, None]:
+        """
+        Generate items one by one from paginated results, asynchronously.
+        
+        Args:
+            stop_page: The page number to stop at (optional).
+            **params: Filter parameters to pass to the API.
+            
+        Yields:
+            T: Each item from the paginated results.
+        """
+        if not str(self.client.__class__.__name__).startswith('Async'):
             raise ValueError("This method requires an async client.")
             
-        all_items: List[Dict[str, Any]] = []
-        page = params.get("page", 1)
+        page_num = params.get("page_num", 1)
         page_size = params.get("page_size", 100)
         
         while True:
-            params["page"] = page
+            params["page_num"] = page_num
             params["page_size"] = page_size
             url = self._build_url()
-            response = await self.client._request("GET", url, params=serialize(params))
-            response_data = response.json()
+            response = await self.client._request("GET", url, params=params)
+            data = response.json()
             
-            # Check if response is paginated
-            if isinstance(response_data, dict) and 'items' in response_data:
-                items = response_data['items']
-                total_pages = response_data.get('total_pages', 1)
+            items = data.get("items", [])
+            has_more = data.get("has_more", False)
+            
+            for item in items:
+                yield self.model_class.from_api_response(item)
                 
-                if not items:
-                    break
-                    
-                all_items.extend(items)
-                
-                if page >= total_pages:
-                    break
-                    
-                page += 1
-            else:
-                # Not paginated, just use the data as is
-                page_data = self._parse_response_data(response_data)
-                if not page_data:
-                    break
-                all_items.extend(page_data)
+            if not has_more or not items:
                 break
                 
-        return [self.model_class.from_api_response(item) for item in all_items]
-    
-    async def paginate_async_generator(self, **params: Any) -> AsyncGenerator[T, None]:
-        """Generate items one by one from paginated results asynchronously."""
-        if not self.client.__class__.__name__.startswith('Async'):
-            raise ValueError("This method requires an async client.")
+            page_num += 1
             
-        page = params.get("page", 1)
-        page_size = params.get("page_size", 100)
-        
-        while True:
-            params["page"] = page
-            params["page_size"] = page_size
-            url = self._build_url()
-            response = await self.client._request("GET", url, params=serialize(params))
-            response_data = response.json()
-            
-            # Check if response is paginated
-            if isinstance(response_data, dict) and 'items' in response_data:
-                items = response_data['items']
-                total_pages = response_data.get('total_pages', 1)
-                
-                if not items:
-                    break
-                    
-                for item in items:
-                    yield self.model_class.from_api_response(item)
-                
-                if page >= total_pages:
-                    break
-                    
-                page += 1
-            else:
-                # Not paginated, just use the data as is
-                page_data = self._parse_response_data(response_data)
-                if not page_data:
-                    break
-                    
-                for item in page_data:
-                    yield self.model_class.from_api_response(item)
+            if stop_page and page_num > stop_page:
                 break
